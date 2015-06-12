@@ -1,0 +1,105 @@
+
+/****************************************************
+
+  MOTOR  CONTROL  code
+  three state superposition 
+
+ *****************************************************/
+
+uint32_t cnt=0;
+char buf[40];
+extern int16_t gyroX, gyroY, gyroZ;
+//motor_t mconst[2][10];
+PID_control PID[MOTOR_SYSTEM_NUM];
+motor_t target[2];
+int MV;
+int TF_function(TF_t t ,motor_t val){
+	motor_t err;
+	//	motor_t delta_mv;
+	motor_t errD;
+	//motor_t MV;
+	err = val-target[t];
+	//mconst[t][errI] += err*dt;
+	PID[t].errI += err*dt;
+	/* err Derivate weight fuction  LPF */
+//	errD = (WEIGHT*(err-mconst[t][err_prev])/dt+(1-WEIGHT)*(mconst[t][errD_prev]));
+	/* err Derivate is used gyro value */
+	if(t == ROLL){
+		errD = gyroX*250/32768/dt;
+	}else{
+		errD = gyroY*250/32768/dt;
+	}
+	/* err Derivate no used LPF */
+	//errD = (err-mconst[t][err_prev])/dt;
+//	MV = (int)(mconst[t][Kp]*err+ mconst[t][Ki]*mconst[t][errI] + mconst[t][Kd]*errD);
+	MV = (int)(PID[t].Kp*err + PID[t].Ki*PID[t].errI + PID[t].Kd*errD);
+	if(MV>=10000){
+		MV=10000;
+		//PID[t].errI -= err*dt;
+		//mconst[t][errI] -= err*dt;
+	//	mconst[t][errI] -=err;
+	}else if(MV<=-10000){
+		MV=-10000;
+		//PID[t].errI -= err*dt;
+		//mconst[t][errI] -= err*dt;
+	//	mconst[t][errI] -=err;
+	}
+	PID[t].err_prev = err;
+	PID[t].errD_prev = errD;
+	//mconst[t][err_prev]=err;
+	//mconst[t][errD_prev]=errD;
+	return (int)MV;
+}
+
+uint32_t FeedForward_function(int m_val){
+	if(m_val>10000){
+		return 10000;
+	}else if(m_val<0){
+		return 0;
+	}
+//	motor_t x = ((motor_t)m_val)*0.065725; 
+	motor_t x = m_val*657.25/10000;
+	motor_t y = 4.4887*powf(10,-10)*powf(x,5) - 5.874*powf(10,-7)* powf(x,4) + 0.00030083*powf(x,3) - 0.057589 *powf(x,2) + 6.2994*x - 0.098165;
+	//motor_t y = 0.00000000044887*x*x*x*x - 0.0000005874*x*x*x*x + 0.00030083*x*x*x - 0.057589 *x*x + 6.2994*x - 0.098165;
+	return (uint32_t)y;
+}
+
+	int m_0,m_1,m_2,m_3;
+int MotorControl(sensor_t ro, sensor_t pit,int thrott[] ){
+	int rForce,pForce;
+	rForce = TF_function(ROLL,ro);
+	pForce = TF_function(PITCH,pit);
+	m_0 = (rForce+pForce)/2+thrott[0];
+	m_1 = (rForce-pForce)/2+thrott[1];
+	m_2 = (-rForce+pForce)/2+thrott[2];
+	m_3 = (-rForce-pForce)/2+thrott[3];
+//	m_0 = pForce+thrott[0];
+//	m_1 = rForce+thrott[1];
+//	m_2 = -rForce+thrott[2];
+//	m_3 = -pForce+thrott[3];
+
+//	m_0 = FeedForward_function(pForce+thrott[0]);
+//	m_1 = FeedForward_function(rForce+thrott[1]);
+//	m_2 = FeedForward_function(-rForce+thrott[2]);
+//	m_3 = FeedForward_function(-pForce+thrott[3]);
+
+//	PwmSetWidth(0,(m_0));
+//	PwmSetWidth(1,(m_0));
+//	PwmSetWidth(2,(m_0));
+//	PwmSetWidth(3,(m_0));
+
+	//  0 < m_ value < 10000  , degree  -180 ~ 0 ~ 180   
+	PwmSetWidth(0,FeedForward_function(m_0));
+	PwmSetWidth(1,FeedForward_function(m_1));
+	PwmSetWidth(2,FeedForward_function(m_2));
+	PwmSetWidth(3,FeedForward_function(m_3));
+//	PwmSetWidth(0,m_0);
+//	PwmSetWidth(1,m_1);
+//	PwmSetWidth(2,m_2);
+//	PwmSetWidth(3,m_3);
+
+
+	
+	return 0; 
+}
+

@@ -1,0 +1,15 @@
+typedef struct sensor_struct_t{
+sensor_t roll;
+sensor_t pitch;
+sensor_t yaw;
+}sensor_struct_t;
+
+
+
+
+void quat_to_euler(float *ro,float* pit, float* ya );
+int sensor_init(sensor_struct_t* angle);
+int sensor_kalman(mpu6050_struct_t* data , sensor_struct_t* angle);
+int sensor_complementary(mpu6050_struct_t* data , sensor_struct_t* angle);
+
+

@@ -1,0 +1,60 @@
+
+//#ifndef _HeadJ_h_
+//#define _HeadJ_h_
+
+#include <stdio.h>
+#include <errno.h>
+#include <ctype.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <string.h>
+#include <getopt.h>
+#include <signal.h>
+#include <sys/param.h>
+#include <sys/ioctl.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/poll.h>
+#include <errno.h>
+#include <stdint.h>
+#include <pthread.h>
+#include <sys/time.h>
+
+#include <math.h>
+#include <time.h>
+#include <sched.h>
+#include <stdint.h>
+
+#include "ultra_snd.h"
+
+
+
+/*CMD CMD*/
+typedef enum {
+EMERGENCY = 0, //system stop all motor init
+TAKEOFF = 1, // start timer and motor and pid
+SYSTEM_KONST = 2,// input = sys Kp Ki Kd 
+THROTT_INPUT = 3,
+TOTAL_SENSOR = 4,
+MAHONY = 5,
+BATT = 6,
+}SYSTEM_CMD;
+
+typedef enum{
+S_ACCEL=0,
+S_GYRO=1,
+S_KALMAN = 2 ,// motor value 0 1 2 3 input
+S_COMPLEMENTARY = 3,
+S_NEW = 4,
+S_QUAT = 5,
+S_QUAT_TO_EULER = 6,
+S_INTEGRAL = 7,
+S_MOTOR = 8,
+}SENSRO_CMD;
+
+
+
+
+//#endif
